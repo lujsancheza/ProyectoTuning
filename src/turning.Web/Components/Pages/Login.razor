@@ -1,0 +1,137 @@
+@page "/login"
+
+@inject AuthApiClient AuthApiClient
+@inject NavigationManager NavigationManager
+@inject TokenAuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Login</PageTitle>
+
+<section class="auth-shell">
+    <article class="auth-panel">
+        <p class="eyebrow">Acceso</p>
+        <h1>Inicia sesion para abrir el frontend protegido.</h1>
+        <p class="hero-copy">
+            El login usa la API existente, persiste el JWT en el navegador y reconstruye la sesion cuando el
+            usuario vuelve a entrar a la aplicacion.
+        </p>
+
+        <div class="feature-grid">
+            <article class="info-card">
+                <span class="card-tag">UX</span>
+                <h2>Errores visibles</h2>
+                <p>Las respuestas de autenticacion fallida se muestran en la misma pantalla, sin dejar al usuario sin contexto.</p>
+            </article>
+
+            <article class="info-card">
+                <span class="card-tag">Sesion</span>
+                <h2>Persistencia del token</h2>
+                <p>Si el JWT sigue vigente, el estado de sesion se restaura automaticamente desde el almacenamiento del navegador.</p>
+            </article>
+        </div>
+    </article>
+
+    <article class="auth-form-card">
+        <div class="auth-card-header">
+            <p class="eyebrow">Login</p>
+            <h2>Entrar a Turning</h2>
+            <p>Usa el usuario registrado en la base de datos para acceder al panel protegido y a la zona Unity.</p>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(_errorMessage))
+        {
+            <div class="auth-alert auth-alert-error">@_errorMessage</div>
+        }
+
+        <EditForm FormName="login-form" Model="_model" OnValidSubmit="HandleSubmitAsync" class="auth-form">
+            <DataAnnotationsValidator />
+
+            <div class="form-field">
+                <label class="form-label" for="login-email">Correo</label>
+                <InputText id="login-email" class="form-input" @bind-Value="_model.Email" autocomplete="username" />
+                <ValidationMessage For="@(() => _model.Email)" />
+            </div>
+
+            <div class="form-field">
+                <label class="form-label" for="login-password">Contrasena</label>
+                <InputText id="login-password" class="form-input" @bind-Value="_model.Password" type="password" autocomplete="current-password" />
+                <ValidationMessage For="@(() => _model.Password)" />
+            </div>
+
+            <button class="hero-button hero-button-primary auth-submit" type="submit" disabled="@_isSubmitting">
+                @(_isSubmitting ? "Validando credenciales..." : "Entrar")
+            </button>
+        </EditForm>
+
+        <p class="auth-link-line">
+            No tienes cuenta todavia? <a href="@BuildRegisterLink()">Crear una cuenta</a>
+        </p>
+        <p class="auth-footnote">API-only auth flow · JWT persistido · rutas protegidas</p>
+    </article>
+</section>
+
+@code {
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
+
+    private readonly LoginInputModel _model = new();
+    private bool _isSubmitting;
+    private string? _errorMessage;
+
+    private async Task HandleSubmitAsync()
+    {
+        _errorMessage = null;
+        _isSubmitting = true;
+
+        try
+        {
+            var authResult = await AuthApiClient.LoginAsync(new LoginRequestDto
+            {
+                Email = _model.Email.Trim(),
+                Password = _model.Password
+            });
+
+            await AuthStateProvider.SignInAsync(authResult);
+            NavigationManager.NavigateTo(ResolveReturnUrl(), replace: true);
+        }
+        catch (ApiException exception)
+        {
+            _errorMessage = exception.Message;
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private string BuildRegisterLink()
+    {
+        return $"/register?returnUrl={Uri.EscapeDataString(ResolveReturnUrl())}";
+    }
+
+    private string ResolveReturnUrl()
+    {
+        if (string.IsNullOrWhiteSpace(ReturnUrl))
+        {
+            return "/workspace";
+        }
+
+        if (ReturnUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || ReturnUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+            || ReturnUrl.StartsWith("//", StringComparison.Ordinal))
+        {
+            return "/workspace";
+        }
+
+        return ReturnUrl.StartsWith("/", StringComparison.Ordinal) ? ReturnUrl : $"/{ReturnUrl}";
+    }
+
+    private sealed class LoginInputModel
+    {
+        [Required(ErrorMessage = "El correo es obligatorio.")]
+        [EmailAddress(ErrorMessage = "Debes escribir un correo valido.")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "La contrasena es obligatoria.")]
+        public string Password { get; set; } = string.Empty;
+    }
+}

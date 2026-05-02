@@ -1,15 +1,20 @@
 @page "/unity"
+@attribute [Authorize]
 
 <PageTitle>Unity Assets</PageTitle>
 
 <section class="hero-panel">
     <p class="eyebrow">Unity</p>
-    <h1>Zona preparada para recibir imagenes y exportaciones desde Unity.</h1>
+    <h1>Zona protegida para recibir imagenes y exportaciones desde Unity.</h1>
     <p class="hero-copy">
-        Este espacio queda listo para que me pases recursos visuales o una exportacion del proyecto de Unity.
-        Desde aqui podemos montar una galeria, un visor, una integracion WebGL o simplemente servir assets
-        estaticos dentro del frontend Blazor.
+        Este espacio ya exige sesion valida antes de exponer los recursos visuales. Desde aqui podemos montar
+        una galeria, un visor, una integracion WebGL o simplemente servir assets estaticos dentro del frontend
+        Blazor.
     </p>
+
+    <div class="hero-actions">
+        <a class="hero-button hero-button-primary" href="workspace">Volver al panel</a>
+    </div>
 </section>
 
 <section class="feature-grid">
@@ -36,7 +41,7 @@
         <h2>Siguiente iteracion</h2>
         <p>
             Cuando me compartas el formato final, preparo la vista concreta: galeria, canvas embebido o el flujo
-            que necesite tu front.
+            que necesite tu front ya conectado a una sesion autenticada.
         </p>
     </article>
 </section>

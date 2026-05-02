@@ -27,6 +27,8 @@ Este documento traduce el PDF `DiagramasC4 (1).pdf` a una base operable dentro d
 - **EmotionVisualizer**
 - **AvatarRenderer**
 
+Nota de aterrizaje: aunque el C4 original nombra `WebSocketClient`, la decisión actual del repositorio es que `src/turning.Web` consuma el backend a través de APIs expuestas por `src/turning.API`.
+
 ### Page 4/5 - Backend Components
 
 - **WebController**
@@ -56,13 +58,14 @@ Responsabilidades base:
 - Composición visual del flujo de experimento.
 - Interfaz de chat para participante e interlocutor.
 - Captura de video/audio mediante JS interop.
-- Renderizado del avatar y consumo de eventos emocionales.
+- Renderizado del avatar y consumo de datos devueltos por la API.
 - Presentación y captura de cuestionarios.
+- Consumo exclusivo de endpoints expuestos por `src/turning.API`.
 
 Componentes a aterrizar en Blazor + JS interop:
 
 - `CameraCaptureService` como servicio JS interop para WebRTC.
-- `WebSocketClient` como cliente de conexión persistente.
+- `ApiClient` como cliente HTTP del backend.
 - `ChatInterface` como componente Razor de conversación.
 - `SurveyComponent` como componente Razor de cuestionarios.
 - `EmotionVisualizer` como traductor de eventos emocionales a parámetros visuales.
@@ -74,13 +77,13 @@ Equivale al punto de entrada del contenedor **Backend API Server**.
 
 Responsabilidades base:
 
-- Controllers REST y endpoint de tiempo real.
+- Controllers y endpoints API HTTP para consumo del frontend.
 - Autorización, validación de entrada y mapeo de contratos.
 - Delegación hacia Application sin lógica de negocio profunda.
 
 Componentes a aterrizar aquí:
 
-- `WebController` y los futuros endpoints HTTP/WebSocket o SignalR.
+- `WebController` y los futuros endpoints HTTP de integración para `src/turning.Web`.
 
 ### `src/turning.Application`
 
@@ -161,8 +164,8 @@ Expone cuestionarios, captura respuestas y las asocia al ensayo.
 6. **Experiment Persistence Module**
 Consolida escritura y recuperación de sesiones, turnos, emociones y resultados.
 
-7. **Realtime Client Experience Module**
-Implementa chat, captura multimodal, visualización emocional y renderizado del avatar en el frontend.
+7. **Web Client Experience Module**
+Implementa chat, captura multimodal, visualización emocional y renderizado del avatar en el frontend consumiendo la API del backend.
 
 ## Suggested Initial Vertical Slices
 
@@ -172,10 +175,10 @@ Implementa chat, captura multimodal, visualización emocional y renderizado del 
 - Asignar condición Humano/IA.
 - Publicar estado inicial al cliente.
 
-### Slice 2 - Basic realtime conversation
+### Slice 2 - Basic API-driven conversation
 
-- Conectar cliente web con backend.
-- Enviar/recibir mensajes de chat.
+- Conectar cliente web con backend mediante APIs.
+- Enviar/recibir mensajes de chat a través de la capa API.
 - Persistir turnos de conversación.
 
 ### Slice 3 - Survey completion
@@ -187,7 +190,7 @@ Implementa chat, captura multimodal, visualización emocional y renderizado del 
 
 - Capturar frames desde frontend.
 - Consultar Hume AI.
-- Publicar eventos emocionales al cliente.
+- Devolver resultados emocionales al cliente a través de la API.
 
 ### Slice 5 - AI intervention
 
@@ -203,7 +206,8 @@ Implementa chat, captura multimodal, visualización emocional y renderizado del 
 ## Architecture Notes Derived From The C4
 
 - El C4 dibuja backend como `Java / Python`, pero la base del repo ya es .NET 10. Se mantiene .NET como plataforma principal y se preservan los nombres lógicos del C4 como servicios/casos de uso.
-- El frontend del C4 menciona React/Vue y WebAssembly, pero la solución actual ya contiene un Blazor Web App. La base propuesta usa Blazor como shell y JS interop para WebRTC, WebSocket y renderizado visual avanzado.
+- El frontend del C4 menciona React/Vue y WebAssembly, pero la solución actual ya contiene un Blazor Web App. La base propuesta usa Blazor como shell y JS interop para WebRTC, consumo de APIs HTTP y renderizado visual avanzado.
+- Restricción arquitectónica vigente: `src/turning.Web` se conecta únicamente a `src/turning.API`; cualquier necesidad futura de actualización incremental debe seguir entrando por esa misma frontera API.
 - La solución actual aún tiene placeholders (`ISampleRepository`, `InMemorySampleRepository`). Esa superficie debe reemplazarse progresivamente por módulos de experimento reales en lugar de convivir con dos modelos conceptuales.
 
 ## Open Questions To Clarify With Requirements

@@ -1,5 +1,8 @@
 namespace Turning.API.Middleware;
 
+using Turning.Application.Exceptions;
+using TurningApplicationException = Turning.Application.Exceptions.ApplicationException;
+
 /// <summary>
 /// Middleware para manejo global de excepciones.
 /// </summary>
@@ -40,14 +43,34 @@ public class ExceptionHandlingMiddleware
     {
         context.Response.ContentType = "application/json";
 
+        var statusCode = StatusCodes.Status500InternalServerError;
+        var message = "Ocurrió un error interno en el servidor";
+
+        if (exception is NotFoundException)
+        {
+            statusCode = StatusCodes.Status404NotFound;
+            message = exception.Message;
+        }
+        else if (exception is TurningApplicationException applicationException)
+        {
+            statusCode = applicationException.Code switch
+            {
+                "AUTH_INVALID_CREDENTIALS" => StatusCodes.Status401Unauthorized,
+                "AUTH_USER_ALREADY_EXISTS" => StatusCodes.Status409Conflict,
+                _ => StatusCodes.Status400BadRequest
+            };
+
+            message = exception.Message;
+        }
+
         var response = new
         {
-            message = "Ocurrió un error interno en el servidor",
+            message,
             type = exception.GetType().Name,
             details = exception.Message
         };
 
-        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.StatusCode = statusCode;
 
         return context.Response.WriteAsJsonAsync(response);
     }

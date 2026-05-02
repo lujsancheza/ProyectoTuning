@@ -4,43 +4,52 @@
 
 <section class="hero-panel">
 	<p class="eyebrow">Turning Tuning</p>
-	<h1>Frontend base en Blazor para conectar la API y recibir assets creados en Unity.</h1>
+	<h1>Autenticacion UX en Blazor lista para consumir la API y abrir zonas protegidas.</h1>
 	<p class="hero-copy">
-		Este proyecto queda separado del backend, listo para crecer por pantallas y preparado para alojar
-		imagenes, sprites o exportaciones que salgan de Unity sin mezclar responsabilidades con las capas
-		de dominio, aplicacion o infraestructura.
+		El frontend ya separa login, registro, persistencia del JWT y navegacion protegida sin romper la
+		frontera con la API. Desde aqui puedes entrar al panel autenticado o seguir ampliando la experiencia
+		visual que vendra desde Unity.
 	</p>
 
 	<div class="hero-actions">
-		<a class="hero-button hero-button-primary" href="unity">Abrir zona Unity</a>
+		<AuthorizeView>
+			<Authorized>
+				<a class="hero-button hero-button-primary" href="workspace">Abrir panel protegido</a>
+				<a class="hero-button hero-button-secondary" href="unity">Entrar a Unity</a>
+			</Authorized>
+			<NotAuthorized>
+				<a class="hero-button hero-button-primary" href="login">Iniciar sesion</a>
+				<a class="hero-button hero-button-secondary" href="register">Crear cuenta</a>
+			</NotAuthorized>
+		</AuthorizeView>
 	</div>
 </section>
 
 <section class="feature-grid">
 	<article class="info-card">
-		<span class="card-tag">Presentacion</span>
-		<h2>Blazor como frontend</h2>
+		<span class="card-tag">Acceso</span>
+		<h2>Login y registro conectados</h2>
 		<p>
-			El frontend vive ahora en <strong>turning.Web</strong>, aislado del backend y listo para consumir la API
-			cuando me pases los requerimientos funcionales.
+			Las pantallas publicas ya envian credenciales a la API, muestran errores de negocio y reconstruyen
+			la sesion desde el token persistido en el navegador.
+		</p>
+	</article>
+
+	<article class="info-card">
+		<span class="card-tag">Proteccion</span>
+		<h2>Navegacion guiada por auth</h2>
+		<p>
+			El router ya detecta rutas con autorizacion, redirige a login y libera el panel o la zona Unity solo
+			cuando la sesion ya esta activa.
 		</p>
 	</article>
 
 	<article class="info-card">
 		<span class="card-tag">Assets</span>
-		<h2>Carpeta publica para Unity</h2>
+		<h2>Unity sigue aislado</h2>
 		<p>
-			Todo lo que generes en Unity se puede colocar en <strong>wwwroot/unity</strong> para servirlo como asset
-			estatico desde Blazor.
-		</p>
-	</article>
-
-	<article class="info-card">
-		<span class="card-tag">Siguiente paso</span>
-		<h2>Base lista para iterar</h2>
-		<p>
-			Cuando me pases pantallas, flujos o contratos, sigo montando componentes, consumo de API y la
-			integracion concreta con Unity.
+			La parte visual sigue preparada para recibir recursos desde <strong>wwwroot/unity</strong> sin mezclar la
+			presentacion con el backend ni con la autenticacion.
 		</p>
 	</article>
 </section>

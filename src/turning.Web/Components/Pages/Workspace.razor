@@ -1,0 +1,378 @@
+@page "/workspace"
+@attribute [Authorize]
+
+@using System.Net
+@using System.Security.Claims
+@using turning.Web.ExperimentSessions
+
+@inject AuthApiClient AuthApiClient
+@inject ExperimentSessionApiClient ExperimentSessionApiClient
+@inject NavigationManager NavigationManager
+@inject TokenAuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Panel protegido</PageTitle>
+
+<section class="session-panel">
+    <p class="eyebrow">Sesion protegida</p>
+    <h1>Panel autenticado listo para sesion y conversacion.</h1>
+    <p class="hero-copy">
+        Esta vista confirma que el JWT persistido se reconstruyo correctamente, que la ruta esta protegida y que
+        el frontend ya puede crear una sesion experimental real en la API y consumir una conversacion persistida sobre esa misma base.
+    </p>
+</section>
+
+@if (_isLoading)
+{
+    <section class="route-guard">
+        <p class="eyebrow">Perfil</p>
+        <h1>Cargando sesion actual.</h1>
+        <p class="hero-copy">Consultando el perfil, la ultima sesion experimental y su conversacion persistida.</p>
+    </section>
+}
+else if (!string.IsNullOrWhiteSpace(_errorMessage))
+{
+    <section class="route-guard">
+        <p class="eyebrow">Sesion</p>
+        <h1>No fue posible cargar el panel.</h1>
+        <p class="hero-copy">@_errorMessage</p>
+        <div class="hero-actions">
+            <button class="hero-button hero-button-primary auth-submit" @onclick="LoadWorkspaceAsync">Reintentar</button>
+        </div>
+    </section>
+}
+else if (_user is not null)
+{
+    <section class="session-grid">
+        <article class="session-card">
+            <span class="card-tag">Usuario</span>
+            <h2>Nombre visible</h2>
+            <span class="session-value">@_user.FullName</span>
+        </article>
+
+        <article class="session-card">
+            <span class="card-tag">Contacto</span>
+            <h2>Correo autenticado</h2>
+            <span class="session-value">@_user.Email</span>
+        </article>
+
+        <article class="session-card">
+            <span class="card-tag">Rol</span>
+            <h2>Permiso actual</h2>
+            <span class="session-value">@_user.Role</span>
+        </article>
+
+        <article class="session-card">
+            <span class="card-tag">Token</span>
+            <h2>Expiracion estimada</h2>
+            <span class="session-value">@_tokenExpiryLabel</span>
+        </article>
+    </section>
+
+    @if (_session is null)
+    {
+        <section class="session-panel">
+            <p class="eyebrow">Session bootstrap</p>
+            <h2>Crear la primera sesion experimental.</h2>
+            <p class="hero-copy">
+                Esta operacion crea una sesion persistida en la API y deja una base real para registrar turnos conversacionales,
+                lecturas emocionales y estado inicial del avatar.
+            </p>
+
+            <div class="form-field">
+                <label class="form-label" for="preferred-condition">Condicion experimental</label>
+                <InputSelect id="preferred-condition" class="form-input" @bind-Value="_preferredCondition">
+                    <option value="AI">AI</option>
+                    <option value="Human">Human</option>
+                </InputSelect>
+            </div>
+
+            <div class="hero-actions">
+                <button class="hero-button hero-button-primary auth-submit" @onclick="HandleCreateSessionAsync" disabled="@_isCreatingSession">
+                    @(_isCreatingSession ? "Creando sesion..." : "Crear sesion experimental")
+                </button>
+            </div>
+
+            <p class="auth-footnote">Bootstrap real · sesion persistida · base lista para siguientes modulos</p>
+        </section>
+    }
+    else
+    {
+        <section class="session-panel">
+            <p class="eyebrow">Sesion experimental</p>
+            <h2>Sesion activa para continuar el MVP.</h2>
+            <p class="hero-copy">
+                La sesion ya existe en persistencia y ahora puede servir como ancla para registrar mensajes,
+                emociones detectadas y transiciones visuales del avatar sobre un contexto comun.
+            </p>
+
+            <div class="hero-actions">
+                <button class="hero-button hero-button-secondary" @onclick="HandleCreateSessionAsync" disabled="@_isCreatingSession">
+                    @(_isCreatingSession ? "Creando nueva sesion..." : "Crear una nueva sesion")
+                </button>
+            </div>
+        </section>
+
+        <section class="session-grid">
+            <article class="session-card">
+                <span class="card-tag">Sesion</span>
+                <h2>Codigo</h2>
+                <span class="session-value">@_session.SessionCode</span>
+            </article>
+
+            <article class="session-card">
+                <span class="card-tag">Condicion</span>
+                <h2>Asignacion inicial</h2>
+                <span class="session-value">@_session.Condition</span>
+            </article>
+
+            <article class="session-card">
+                <span class="card-tag">Estado</span>
+                <h2>Ciclo de vida</h2>
+                <span class="session-value">@_session.Status</span>
+            </article>
+
+            <article class="session-card">
+                <span class="card-tag">Avatar</span>
+                <h2>Estado base</h2>
+                <span class="session-value">@_session.AvatarState</span>
+            </article>
+
+            <article class="session-card">
+                <span class="card-tag">Conversacion</span>
+                <h2>Primer paso</h2>
+                <span class="session-value">@_session.ConversationStage</span>
+                <p>Turnos registrados: @_session.ConversationTurnCount</p>
+            </article>
+
+            <article class="session-card">
+                <span class="card-tag">Emociones</span>
+                <h2>Pipeline actual</h2>
+                <span class="session-value">@_session.EmotionStage</span>
+                <p>Muestras registradas: @_session.EmotionSampleCount</p>
+            </article>
+
+            <article class="session-card">
+                <span class="card-tag">Avatar readiness</span>
+                <h2>Siguiente modulo</h2>
+                <span class="session-value">@_session.AvatarStage</span>
+            </article>
+
+            <article class="session-card">
+                <span class="card-tag">Creacion</span>
+                <h2>Fecha base</h2>
+                <span class="session-value">@_session.CreatedAtUtc.ToLocalTime().ToString("g")</span>
+            </article>
+        </section>
+
+        <section class="session-panel conversation-shell">
+            <p class="eyebrow">Conversation orchestration</p>
+            <h2>Bloque inicial de chat sobre la sesion real.</h2>
+            <p class="hero-copy">
+                Esta superficie consume los turnos persistidos de la sesion y permite agregar nuevos mensajes para dejar lista la base
+                sobre la que luego se montaran intervencion de IA, analisis emocional y expresion del avatar.
+            </p>
+
+            @if (IsAiCondition)
+            {
+                <p class="auth-footnote">Sesion AI activa · cada mensaje del participante dispara una respuesta automatica del interlocutor</p>
+            }
+
+            <div class="conversation-feed">
+                @if (_conversationTurns.Count == 0)
+                {
+                    <div class="conversation-empty">
+                        No hay mensajes todavia. Agrega el primer turno para activar la conversacion persistida.
+                    </div>
+                }
+                else
+                {
+                    @foreach (var turn in _conversationTurns)
+                    {
+                        <article class="@GetConversationTurnCss(turn)">
+                            <div class="conversation-meta">
+                                <span>@turn.Sender</span>
+                                <span>Turno @turn.SequenceNumber.ToString("00")</span>
+                                <span>@turn.CreatedAtUtc.ToLocalTime().ToString("HH:mm")</span>
+                            </div>
+                            <p>@turn.Message</p>
+                        </article>
+                    }
+                }
+            </div>
+
+            <div class="auth-form">
+                @if (!IsAiCondition)
+                {
+                    <div class="form-field">
+                        <label class="form-label" for="conversation-sender">Emisor</label>
+                        <InputSelect id="conversation-sender" class="form-input" @bind-Value="_conversationSender">
+                            <option value="Participant">Participant</option>
+                            <option value="Interlocutor">Interlocutor</option>
+                        </InputSelect>
+                    </div>
+                }
+
+                <div class="form-field">
+                    <label class="form-label" for="conversation-message">Mensaje</label>
+                    <textarea id="conversation-message" class="form-input form-textarea" @bind="_draftMessage"></textarea>
+                </div>
+
+                <div class="hero-actions">
+                    <button class="hero-button hero-button-primary auth-submit" @onclick="HandleAddConversationTurnAsync" disabled="@_isSubmittingTurn">
+                        @(_isSubmittingTurn ? "Guardando mensaje..." : "Agregar mensaje")
+                    </button>
+                </div>
+            </div>
+        </section>
+    }
+}
+
+@code {
+    private AuthenticatedUserDto? _user;
+    private ExperimentSessionSnapshotDto? _session;
+    private List<ConversationTurnSnapshotDto> _conversationTurns = new();
+    private bool _isLoading = true;
+    private bool _isCreatingSession;
+    private bool _isSubmittingTurn;
+    private string? _errorMessage;
+    private string _tokenExpiryLabel = "No disponible";
+    private string _preferredCondition = "AI";
+    private string _conversationSender = "Participant";
+    private string _draftMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadWorkspaceAsync();
+    }
+
+    private async Task LoadWorkspaceAsync()
+    {
+        _isLoading = true;
+        _errorMessage = null;
+
+        try
+        {
+            _user = await AuthApiClient.GetCurrentUserAsync();
+            var authenticationState = await AuthStateProvider.GetAuthenticationStateAsync();
+            _tokenExpiryLabel = ResolveExpiry(authenticationState.User);
+            _session = await ExperimentSessionApiClient.GetLatestAsync();
+
+            if (_session is not null)
+            {
+                await LoadConversationAsync(_session.Id);
+            }
+            else
+            {
+                _conversationTurns.Clear();
+            }
+        }
+        catch (ApiException exception) when (exception.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            await AuthStateProvider.SignOutAsync();
+            NavigationManager.NavigateTo("/login?returnUrl=%2Fworkspace", replace: true);
+        }
+        catch (ApiException exception)
+        {
+            _errorMessage = exception.Message;
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task HandleCreateSessionAsync()
+    {
+        _isCreatingSession = true;
+        _errorMessage = null;
+
+        try
+        {
+            _session = await ExperimentSessionApiClient.CreateBootstrapAsync(new CreateExperimentSessionRequestDto
+            {
+                PreferredCondition = _preferredCondition
+            });
+
+            _conversationTurns.Clear();
+            _draftMessage = string.Empty;
+            _conversationSender = "Participant";
+        }
+        catch (ApiException exception) when (exception.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            await AuthStateProvider.SignOutAsync();
+            NavigationManager.NavigateTo("/login?returnUrl=%2Fworkspace", replace: true);
+        }
+        catch (ApiException exception)
+        {
+            _errorMessage = exception.Message;
+        }
+        finally
+        {
+            _isCreatingSession = false;
+        }
+    }
+
+    private async Task LoadConversationAsync(Guid sessionId)
+    {
+        var turns = await ExperimentSessionApiClient.GetConversationTurnsAsync(sessionId);
+        _conversationTurns = new List<ConversationTurnSnapshotDto>(turns);
+    }
+
+    private async Task HandleAddConversationTurnAsync()
+    {
+        if (_session is null || string.IsNullOrWhiteSpace(_draftMessage))
+        {
+            return;
+        }
+
+        _isSubmittingTurn = true;
+        _errorMessage = null;
+
+        try
+        {
+            await ExperimentSessionApiClient.AddConversationTurnAsync(_session.Id, new AddConversationTurnRequestDto
+            {
+                Sender = IsAiCondition ? "Participant" : _conversationSender,
+                Message = _draftMessage
+            });
+
+            await LoadConversationAsync(_session.Id);
+            _draftMessage = string.Empty;
+            _session = await ExperimentSessionApiClient.GetLatestAsync();
+        }
+        catch (ApiException exception) when (exception.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            await AuthStateProvider.SignOutAsync();
+            NavigationManager.NavigateTo("/login?returnUrl=%2Fworkspace", replace: true);
+        }
+        catch (ApiException exception)
+        {
+            _errorMessage = exception.Message;
+        }
+        finally
+        {
+            _isSubmittingTurn = false;
+        }
+    }
+
+    private static string GetConversationTurnCss(ConversationTurnSnapshotDto turn)
+    {
+        return string.Equals(turn.Sender, "Interlocutor", StringComparison.OrdinalIgnoreCase)
+            ? "conversation-turn conversation-turn-interlocutor"
+            : "conversation-turn conversation-turn-participant";
+    }
+
+    private bool IsAiCondition => string.Equals(_session?.Condition, "AI", StringComparison.OrdinalIgnoreCase);
+
+    private static string ResolveExpiry(ClaimsPrincipal user)
+    {
+        var expValue = user.FindFirst("exp")?.Value;
+
+        if (long.TryParse(expValue, out var unixSeconds))
+        {
+            return DateTimeOffset.FromUnixTimeSeconds(unixSeconds).LocalDateTime.ToString("g");
+        }
+
+        return "No disponible";
+    }
+}

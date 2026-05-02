@@ -1,0 +1,44 @@
+using Microsoft.EntityFrameworkCore;
+using Turning.Application.Interfaces;
+using Turning.Domain.Entities;
+using Turning.Infrastructure.Persistence;
+
+namespace Turning.Infrastructure.Repositories;
+
+/// <summary>
+/// Repositorio EF Core para turnos conversacionales.
+/// </summary>
+public sealed class ConversationTurnRepository : IConversationTurnRepository
+{
+    private readonly TurningDbContext _dbContext;
+
+    /// <summary>
+    /// Constructor del repositorio de conversación.
+    /// </summary>
+    public ConversationTurnRepository(TurningDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+
+    /// <inheritdoc />
+    public async Task AddAsync(ConversationTurn turn, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(turn);
+        await _dbContext.ConversationTurns.AddAsync(turn, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<ConversationTurn>> ListBySessionAsync(Guid sessionId, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.ConversationTurns
+            .Where(turn => turn.ExperimentSessionId == sessionId && !turn.IsDeleted)
+            .OrderBy(turn => turn.SequenceNumber)
+            .ToArrayAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        return _dbContext.SaveChangesAsync(cancellationToken);
+    }
+}

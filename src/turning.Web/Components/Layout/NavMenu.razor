@@ -1,4 +1,7 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@inject NavigationManager NavigationManager
+@inject TokenAuthenticationStateProvider AuthStateProvider
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid brand-block">
         <a class="navbar-brand" href="">Turning</a>
         <span class="brand-caption">Blazor + Unity</span>
@@ -15,15 +18,59 @@
             </NavLink>
         </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="unity">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Zona Unity
-            </NavLink>
-        </div>
+        <AuthorizeView Context="authState">
+            <Authorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="workspace">
+                        <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Panel protegido
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="unity">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Zona Unity
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <button class="nav-link nav-button" @onclick="HandleLogoutAsync">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Cerrar sesion
+                    </button>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="login">
+                        <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Login
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="register">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Registro
+                    </NavLink>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
     </nav>
 
     <div class="sidebar-note px-3">
-        Frontend listo para consumir la API y alojar los recursos visuales que salgan de Unity.
+        <AuthorizeView Context="authState">
+            <Authorized>
+                Sesion activa para @authState.User.Identity?.Name. El frontend ya navega con rutas protegidas y token JWT persistido.
+            </Authorized>
+            <NotAuthorized>
+                Frontend listo para consumir la API, persistir el token y alojar los recursos visuales que salgan de Unity.
+            </NotAuthorized>
+        </AuthorizeView>
     </div>
 </div>
+
+@code {
+    private async Task HandleLogoutAsync()
+    {
+        await AuthStateProvider.SignOutAsync();
+        NavigationManager.NavigateTo("/login", replace: true);
+    }
+}
 

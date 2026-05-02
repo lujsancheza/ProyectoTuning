@@ -1,6 +1,9 @@
 namespace Turning.Application.DependencyInjection;
 
 using Microsoft.Extensions.DependencyInjection;
+using Turning.Application.Features.Auth;
+using Turning.Application.Features.ConversationTurns;
+using Turning.Application.Features.ExperimentSessions;
 
 /// <summary>
 /// Extensiones para registrar servicios de Application en el contenedor de inyección de dependencias.
@@ -14,9 +17,13 @@ public static class DependencyInjectionExtensions
     /// <returns>La colección de servicios para permitir encadenamiento.</returns>
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
-        // Aquí se registrarían los servicios de MediatR, validadores, etc.
-        // services.AddMediatR(typeof(DependencyInjectionExtensions).Assembly);
+        // Aquí se registrarán validadores, handlers y mensajería de Wolverine
+        // cuando esa integración se incorpore al stack.
         // services.AddValidatorsFromAssembly(typeof(DependencyInjectionExtensions).Assembly);
+
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IConversationTurnService, ConversationTurnService>();
+        services.AddScoped<IExperimentSessionService, ExperimentSessionService>();
 
         return services;
     }

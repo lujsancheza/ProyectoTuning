@@ -1,6 +1,23 @@
-﻿<Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)">
-    <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
-        <FocusOnNavigate RouteData="routeData" Selector="h1" />
-    </Found>
-</Router>
+﻿@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<CascadingAuthenticationState>
+    <AuthStateBootstrapper />
+
+    <Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
+                <NotAuthorized>
+                    <RedirectToLogin />
+                </NotAuthorized>
+                <Authorizing>
+                    <section class="route-guard">
+                        <p class="eyebrow">Sesion</p>
+                        <h1>Validando acceso protegido.</h1>
+                        <p class="hero-copy">Esperando el token persistido en el navegador para reconstruir la sesion.</p>
+                    </section>
+                </Authorizing>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="routeData" Selector="h1" />
+        </Found>
+    </Router>
+</CascadingAuthenticationState>

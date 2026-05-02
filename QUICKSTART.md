@@ -103,8 +103,8 @@ var retrieved = await repository.GetByIdAsync(sample.Id);
 
 ```xml
 <!-- Application -->
-<PackageReference Include="MediatR" Version="12.4.1" />
 <PackageReference Include="FluentValidation" Version="11.9.2" />
+<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
 
 <!-- Infrastructure -->
 <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />

@@ -33,6 +33,29 @@ main {
     text-transform: uppercase;
 }
 
+.session-chip {
+    align-items: center;
+    background: rgba(17, 38, 44, 0.08);
+    border: 1px solid rgba(17, 38, 44, 0.08);
+    border-radius: 999px;
+    color: #11262c;
+    display: inline-flex;
+    font-family: "IBM Plex Mono", "Consolas", monospace;
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+    padding: 0.4rem 0.75rem;
+    text-transform: uppercase;
+}
+
+.top-row-button {
+    background: none;
+    border: none;
+    color: #0f5965;
+    cursor: pointer;
+    font-weight: 600;
+    padding: 0;
+}
+
     .top-row ::deep a, .top-row ::deep .btn-link {
         white-space: nowrap;
         margin-left: 1.5rem;
@@ -55,6 +78,10 @@ main {
 
     .top-row ::deep a, .top-row ::deep .btn-link {
         margin-left: 0;
+    }
+
+    .session-chip {
+        display: none;
     }
 }
 

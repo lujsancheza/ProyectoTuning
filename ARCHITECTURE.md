@@ -121,7 +121,7 @@ Infrastructure ─→ depende de Application y Domain
   - Validadores (FluentValidation)
   - Behaviors (cross-cutting concerns)
   - Excepciones de Aplicación
-- **Patrón:** CQRS con MediatR (preparado)
+- **Patrón:** CQRS y mensajería con Wolverine (pendiente de incorporación)
 
 #### 🟨 **turning.Infrastructure**
 - **Propósito:** Implementaciones técnicas y acceso a externos
@@ -308,10 +308,9 @@ dotnet add src/turning.Infrastructure package Microsoft.EntityFrameworkCore.SqlS
 - Configurar entidades con Fluent API
 - Crear migraciones
 
-### 3. Implementar MediatR CQRS
-```powershell
-dotnet add src/turning.Application package MediatR
-```
+### 3. Incorporar Wolverine para CQRS y mensajería
+- Registrar handlers y mensajería en `turning.Application` y `turning.API`
+- Definir el transporte y pipeline una vez llegue la implementación base
 
 ### 4. Agregar Validación con FluentValidation
 - Crear validadores en `Application/Features/{Feature}/`

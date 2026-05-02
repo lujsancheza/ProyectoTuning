@@ -11,12 +11,13 @@
     <link rel="stylesheet" href="@Assets["turning.Web.styles.css"]" />
     <ImportMap />
     <link rel="icon" type="image/png" href="favicon.png" />
-    <HeadOutlet />
+    <HeadOutlet @rendermode="@(new InteractiveServerRenderMode(prerender: false))" />
 </head>
 
 <body>
     <Routes />
     <ReconnectModal />
+    <script src="@Assets["js/authStorage.js"]"></script>
     <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>
 

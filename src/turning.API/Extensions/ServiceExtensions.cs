@@ -25,7 +25,11 @@ public static class ServiceExtensions
             options.AddPolicy("AllowSpecific", builder =>
             {
                 builder
-                    .WithOrigins("https://localhost:3000", "https://localhost:7001")
+                    .WithOrigins(
+                        "https://localhost:7028",
+                        "http://localhost:5251",
+                        "https://localhost:7001",
+                        "https://localhost:3000")
                     .AllowAnyMethod()
                     .AllowAnyHeader()
                     .AllowCredentials();

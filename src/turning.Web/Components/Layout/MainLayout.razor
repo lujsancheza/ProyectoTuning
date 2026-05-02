@@ -1,4 +1,7 @@
-﻿@inherits LayoutComponentBase
+﻿@inject NavigationManager NavigationManager
+@inject TokenAuthenticationStateProvider AuthStateProvider
+
+@inherits LayoutComponentBase
 
 <div class="page">
     <div class="sidebar">
@@ -8,7 +11,18 @@
     <main>
         <div class="top-row px-4">
             <span class="top-row-label">Turning Web</span>
-            <a href="unity">Unity Assets</a>
+            <AuthorizeView Context="authState">
+                <Authorized>
+                    <span class="session-chip">@authState.User.Identity?.Name</span>
+                    <a href="workspace">Panel</a>
+                    <a href="unity">Unity Assets</a>
+                    <button class="top-row-button" @onclick="HandleLogoutAsync">Cerrar sesion</button>
+                </Authorized>
+                <NotAuthorized>
+                    <a href="login">Login</a>
+                    <a href="register">Registro</a>
+                </NotAuthorized>
+            </AuthorizeView>
         </div>
 
         <article class="content px-4">
@@ -22,3 +36,11 @@
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+
+@code {
+    private async Task HandleLogoutAsync()
+    {
+        await AuthStateProvider.SignOutAsync();
+        NavigationManager.NavigateTo("/login", replace: true);
+    }
+}

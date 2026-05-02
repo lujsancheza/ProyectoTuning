@@ -22,18 +22,18 @@ Como participante del experimento, necesito completar un ensayo conversacional c
 
 ---
 
-### User Story 2 - Orquestar intervención de IA y emociones en tiempo real (Priority: P2)
+### User Story 2 - Orquestar intervención de IA y emociones mediante APIs backend (Priority: P2)
 
 Como sistema experimental, necesito interceptar mensajes y señales multimodales para consultar servicios externos de IA y emociones, de forma que pueda generar respuestas y expresiones del avatar durante el ensayo.
 
 **Why this priority**: El valor diferencial del sistema está en la suplantación parcial del interlocutor y en la traducción de emociones a comportamiento del avatar.
 
-**Independent Test**: Puede probarse enviando texto y frames de video desde el cliente web, verificando que el backend consulta adaptadores externos y devuelve eventos de respuesta y expresión al cliente.
+**Independent Test**: Puede probarse enviando texto y frames de video desde el cliente web mediante llamadas a la API, verificando que el backend consulta adaptadores externos y devuelve respuestas y estado consumibles por el frontend.
 
 **Acceptance Scenarios**:
 
-1. **Given** una sesión requiere intervención de IA, **When** el backend recibe el contexto conversacional, **Then** solicita una respuesta al adaptador de generación de texto y publica el resultado al cliente.
-2. **Given** el cliente envía frames de video o audio para análisis, **When** el backend procesa la solicitud, **Then** consulta el puerto de análisis emocional y emite datos de expresión facial utilizables por el avatar.
+1. **Given** una sesión requiere intervención de IA, **When** el backend recibe el contexto conversacional a través de la API, **Then** solicita una respuesta al adaptador de generación de texto y devuelve el resultado al cliente web mediante la misma capa API.
+2. **Given** el cliente envía frames de video o audio para análisis a través de la API, **When** el backend procesa la solicitud, **Then** consulta el puerto de análisis emocional y devuelve datos de expresión facial utilizables por el avatar.
 
 ---
 
@@ -55,7 +55,7 @@ Como investigador, necesito que el sistema almacene conversaciones, asignaciones
 ## Edge Cases
 
 - ¿Qué ocurre si OpenAI o Hume AI no responden dentro del tiempo esperado durante una sesión activa?
-- ¿Cómo debe recuperarse el cliente web cuando se pierde y restablece la conexión WebSocket?
+- ¿Cómo debe recuperarse el cliente web cuando una llamada API falla o expira durante una sesión activa?
 - ¿Qué ocurre si el participante niega permisos de cámara o micrófono pero el ensayo requiere análisis emocional?
 - ¿Cómo se comporta el sistema si una sesión intenta cerrarse sin haber contestado el cuestionario obligatorio?
 - ¿Qué sucede si la base de asociaciones emoción-expresión no tiene una coincidencia para la emoción detectada?
@@ -67,14 +67,14 @@ Como investigador, necesito que el sistema almacene conversaciones, asignaciones
 - **FR-001**: The system MUST iniciar y administrar sesiones experimentales identificables de extremo a extremo.
 - **FR-002**: The system MUST asignar a cada ensayo una condición experimental explícita entre Humano e IA.
 - **FR-003**: The system MUST exponer un cliente web capaz de renderizar chat, capturar video, mostrar cuestionarios y reproducir animación del avatar.
-- **FR-004**: The system MUST mantener un canal de comunicación en tiempo real entre cliente web y backend para mensajes, eventos de expresión y estado de sesión.
+- **FR-004**: The system MUST hacer que el cliente web consuma el backend exclusivamente a través de endpoints API expuestos por `src/turning.API`.
 - **FR-005**: The system MUST interceptar contexto conversacional para decidir cuándo delegar la respuesta a IA.
 - **FR-006**: The system MUST integrar un puerto de generación de texto desacoplado de su proveedor concreto.
 - **FR-007**: The system MUST integrar un puerto de análisis emocional desacoplado de su proveedor concreto.
 - **FR-008**: The system MUST traducir resultados emocionales a expresiones faciales o parámetros de animación del avatar.
 - **FR-009**: The system MUST administrar el ciclo de vida de cuestionarios, incluyendo entrega, captura de respuestas y persistencia.
 - **FR-010**: The system MUST persistir conversaciones, eventos emocionales, respuestas generadas, asignaciones y cuestionarios por sesión.
-- **FR-011**: The system MUST exponer puntos de entrada backend separados para presentación, orquestación de experimento, persistencia e integraciones externas.
+- **FR-011**: The system MUST exponer puntos de entrada backend API para presentación, orquestación de experimento, persistencia e integraciones externas, sin acceso directo del frontend a infraestructura o servicios externos.
 - **FR-012**: The system MUST permitir degradación controlada cuando un servicio externo falle, sin perder la sesión activa ni su trazabilidad.
 - **FR-013**: The system MUST mapear cada módulo del C4 a uno o más proyectos existentes en `src/turning.Domain`, `src/turning.Application`, `src/turning.Infrastructure`, `src/turning.API` y `src/turning.Web`.
 - **FR-014**: The system MUST keep puertos, adaptadores y servicios de orquestación aislados según la dirección de dependencias de Clean Architecture.
@@ -96,7 +96,7 @@ Como investigador, necesito que el sistema almacene conversaciones, asignaciones
 
 - **SC-001**: Un ensayo puede ejecutarse de extremo a extremo con creación de sesión, intercambio conversacional y cierre con cuestionario sin intervención manual sobre la base de datos.
 - **SC-002**: El sistema puede persistir el 100% de los eventos clave de una sesión validada: asignación, turnos de conversación, respuestas generadas y respuestas de cuestionario.
-- **SC-003**: Una validación funcional puede demostrar que el cliente web recibe tanto mensajes de chat como eventos de expresión facial durante una sesión activa.
+- **SC-003**: Una validación funcional puede demostrar que el cliente web recibe por API tanto mensajes de chat como datos de expresión facial durante una sesión activa.
 - **SC-004**: Cuando falle una integración externa, la sesión conserva su identificador, su estado experimental y un error trazable sin abortar silenciosamente el flujo.
 
 ## Assumptions
@@ -104,5 +104,5 @@ Como investigador, necesito que el sistema almacene conversaciones, asignaciones
 - El diagrama usa tecnologías de referencia como React, Vue, Java o Python, pero la implementación base en este repositorio se aterriza sobre .NET 10, ASP.NET Core y Blazor porque esa es la plataforma ya elegida.
 - El mismo cliente web puede ser usado por participante e interlocutor humano, aunque en refinamientos posteriores puede dividirse en experiencias separadas si los requisitos lo exigen.
 - La persistencia objetivo será relacional, alineada con PostgreSQL en el C4, aunque el repositorio actual aún tenga placeholders en memoria.
-- La comunicación en tiempo real puede empezar con WebSocket o SignalR, siempre que el contrato preserve envío de mensajes, eventos emocionales y estado de sesión.
+- El frontend en `src/turning.Web` consumirá únicamente la capa API de `src/turning.API`; no accederá directamente a base de datos, adaptadores externos ni repositorios.
 - Los requisitos detallados del levantamiento posterior refinarán nombres finales de entidades, validaciones y reglas de negocio, pero no deberían romper estos límites arquitectónicos base.

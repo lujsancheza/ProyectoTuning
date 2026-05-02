@@ -1,6 +1,11 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Turning.Application.Interfaces;
+using Turning.Infrastructure.AI;
+using Turning.Infrastructure.Persistence;
 using Turning.Infrastructure.Repositories;
+using Turning.Infrastructure.Security;
 
 namespace Turning.Infrastructure.DependencyInjection;
 
@@ -13,12 +18,25 @@ public static class DependencyInjectionExtensions
     /// Añade los servicios de la capa Infrastructure al contenedor de servicios.
     /// </summary>
     /// <param name="services">Colección de servicios.</param>
+    /// <param name="configuration">Configuración de la aplicación para registrar persistencia y seguridad.</param>
     /// <returns>La colección de servicios para permitir encadenamiento.</returns>
-    public static IServiceCollection AddInfrastructureServices(this IServiceCollection services)
+    public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
+        var connectionString = configuration.GetConnectionString("DefaultConnection")
+            ?? "Data Source=turning.db";
+
+        services.AddDbContext<TurningDbContext>(options =>
+            options.UseSqlite(connectionString));
+
         // Registra los repositorios
         // IMPORTANTE: En producción, reemplaza InMemorySampleRepository con una implementación real
+        services.AddScoped<IConversationTurnRepository, ConversationTurnRepository>();
         services.AddScoped<ISampleRepository, InMemorySampleRepository>();
+        services.AddScoped<IExperimentSessionRepository, ExperimentSessionRepository>();
+        services.AddScoped<ITextGenerationPort, RuleBasedTextGenerationAdapter>();
+        services.AddScoped<IUserAccountRepository, UserAccountRepository>();
+        services.AddScoped<IPasswordHasherService, PasswordHasherService>();
+        services.AddScoped<ITokenService, JwtTokenService>();
 
         // Aquí se registrarían otros servicios de infraestructura:
         // - DbContext

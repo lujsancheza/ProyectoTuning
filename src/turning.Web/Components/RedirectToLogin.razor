@@ -1,0 +1,21 @@
+@inject NavigationManager NavigationManager
+
+<section class="route-guard">
+    <p class="eyebrow">Acceso restringido</p>
+    <h1>Redirigiendo al login.</h1>
+    <p class="hero-copy">La ruta pedida requiere una sesion valida.</p>
+</section>
+
+@code {
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        var relativePath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        var returnUrl = string.IsNullOrWhiteSpace(relativePath) ? "/workspace" : $"/{relativePath.TrimStart('/')}";
+        NavigationManager.NavigateTo($"/login?returnUrl={Uri.EscapeDataString(returnUrl)}", replace: true);
+    }
+}
